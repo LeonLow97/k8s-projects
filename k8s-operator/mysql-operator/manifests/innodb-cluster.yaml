@@ -15,6 +15,41 @@ spec:
     instances: 1 # 1 MySQL Router instance
     version: 9.3.0
 
+  # Setting PersistentVolumeClaims Size
+  ## MySQL Operator creates the PVC for each Pod, each PVC follows naming scheme `datadir-{clustername}-[0-9]`
+  datadirVolumeClaimTemplate:
+    accessModes:
+      - ReadWriteOnce # only one Pod can mount this PVC in read-write mode at a time, and only from a single node
+    resources:
+      requests:
+        storage: 1Gi
+
+  # The initDB Object
+  ## Allows you to initialize a new MySQL InnoDBCluster by cloning data from an existing MySQL server.
+  ## initDB.clone is meant to clone data from an existing, already-running InnoDBCluster.
+  ## Useful when:
+  ## - Creating a new cluster and wait to start it with existing data.
+  ## - Replicate a production DB to a dev/test cluster.
+  ## - Migrating data between Kubernetes namespaces or clusters.
+  # initDB:
+  #   clone:
+  #     donorUrl: myinnodbcluster-0.myinnodbcluster-instances.default.svc.cluster.local:3306 # url of the cluster to clone from
+  #     rootUser: root
+  #     secretKeyRef:
+  #       name: innodbsecrets
+  
+  # `my.cnf` Settings
+  # This content is merged into the generated `my.cnf` file used by each Pod's `mysql` container.
+  # MySQL Operator generates its own base configuration, the `mycnf` field lets you inject extra overrides
+  # into the [mysqld] section such as `max_connections`, `innodb_buffer_pool_size`, `slow_query_log`
+  #   - max_connections: maximum number of client connections that MySQL server will accept at the same time
+  #   - innodb_buffer_pool_size: sets the amount of RAM allocated to InnoDB's buffer pool, which caches table data and indexes.
+  #   - slow_query_log: enables logging of slow SQL queries that exceed a threshold (e.g., > 2 seconds).
+  # kubectl get cm myinnodbcluster-initconf -o json | jq -r '.data["my.cnf.in"]'
+  mycnf: |
+    [mysqld]
+    max_connections=162
+
 ---
 apiVersion: v1
 kind: Secret

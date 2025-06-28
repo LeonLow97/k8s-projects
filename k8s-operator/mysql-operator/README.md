@@ -1,10 +1,11 @@
 # Content
 
-- [Project Setup]
+- [Project Setup](#project-setup)
 - [Kubernetes Controllers](#kubernetes-controllers)
 - [MySQL Operator for Kubernetes](#mysql-operator-for-kubernetes)
 - [MySQL Operator Kubernetes Architecture](#mysql-operator-kubernetes-architecture)
 - [MySQL InnoDB Cluster](#mysql-innodb-cluster)
+- [Understanding Kubernetes CRDs and Custom Resources in MySQL Operator](#understanding-kubernetes-crds-and-custom-resources-in-mysql-operator)
 - [References](#references)
 
 # Project Setup
@@ -39,7 +40,7 @@ kubectl get innodbcluster --watch
 # myinnodbcluster   ONLINE   3        3           1         UNKNOWN   87s
 
 # Connect with MySQL Shell to check the host name
-# This command connects to `myinnodbcluster` headless Service (created by MySQL Operator), 
+# This command connects to `myinnodbcluster` headless Service (created by MySQL Operator),
 # exposing all pods of the StatefulSet (e.g., `myinnodbcluster-0`, `-1`, `-2`).
 kubectl run --rm -it myshell --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root@myinnodbcluster --sql
 ## Expected Output:
@@ -50,7 +51,7 @@ kubectl run --rm -it myshell --image=container-registry.oracle.com/mysql/communi
 # | myinnodbcluster-0 |
 # +-------------------+
 # 1 row in set (0.0021 sec)
-## This shows a successful connection that was routed to the myinnodbcluster-0 pod in the 
+## This shows a successful connection that was routed to the myinnodbcluster-0 pod in the
 ## MySQL InnoDB Cluster. It connects to `-0` pod because only one pod is elected as the primary (writer),
 ## usually the first one, myinnodbcluster-0, others (-1, -2) are replicas (read-only by default).
 ```
@@ -109,6 +110,47 @@ Once an InnoDB Cluster (`InnoDBCluster`) resource is deployed to the Kubernetes 
 - [Kubernetes Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) for MySQL Routers.
   - MySQL Routers are **stateless** services routing the application to the current Primary or a Replica, depending on the app's choice.
   - The operator can scale the number of routers up or down as required by the Cluster's workload.
+
+# Understanding Kubernetes CRDs and Custom Resources in MySQL Operator
+
+## Custom Resource
+
+```yaml
+apiVersion: mysql.oracle.com/v2
+kind: InnoDBCluster
+```
+
+- This is a **Custom Resource (CR)** defined and managed by the **MySQL Operator**.
+- The CR is watched by the operator via `kube-api-server`.
+
+## What defines the CR's structure?
+
+That's the **Custom Resource Definition (CRD)**:
+
+- The CRD tells the Kubernetes API Server what fields are allowed (like `spec.instances`, `spec.router`, `spec.version`, etc.)
+- It acts as a **schema contract** for validating any `InnoDBCluster` objects.
+- Once the CRD is installed, you can do `kubectl get innodbcluster`
+
+## What does the MySQL Operator do?
+
+The Operator is a **controller** that:
+
+- Watches the Kubernetes API Server for changes to `InnoDBCluster` objects.
+- Reconciles the actual state (Pods, PVCs, Services, etc.) to matched the declared spec.
+- Performs orchestration like:
+  - Creating StatefulSets
+  - Configuring Group Replication
+  - Bootstrapping MySQL instances
+  - Managing MySQL Router
+  - Auto-healing (e.g., failover)
+
+```yaml
+# So you write intent in the CR like this, and the operator handles how to make that happen.
+spec:
+  instances: 3
+  router:
+    instances: 1
+```
 
 # References
 

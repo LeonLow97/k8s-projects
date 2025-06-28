@@ -1,0 +1,27 @@
+# MySQL Operator Custom Resource Properties:
+# https://dev.mysql.com/doc/mysql-operator/en/mysql-operator-properties.html#mysql-operator-spec-innodbcluster
+
+# Custom resource managed by the MySQL Operator, and it uses CRD to define its schema
+apiVersion: mysql.oracle.com/v2
+kind: InnoDBCluster
+metadata:
+  name: myinnodbcluster
+spec:
+  secretName: innodbsecrets
+  tlsUseSelfSigned: true
+  instances: 3 # 3 MySQL Server instances
+  version: 9.3.0
+  router:
+    instances: 1 # 1 MySQL Router instance
+    version: 9.3.0
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: innodbsecrets
+type: Opaque
+stringData:
+  rootUser: root
+  rootHost: "%"
+  rootPassword: secretpassword

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products-deployment
+  namespace: k8s-ingress
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      microservice: products-service
+  template:
+    metadata:
+      labels:
+        microservice: products-service
+    spec:
+      containers:
+        - name: products-service
+          image: localhost:5000/products-service:latest
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: 250m
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

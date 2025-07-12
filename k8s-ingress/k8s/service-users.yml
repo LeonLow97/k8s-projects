@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+  namespace: k8s-ingress
+spec:
+  type: ClusterIP # default Service is ClusterIP
+  selector:
+    microservice: users-service
+  ports:
+    - protocol: TCP
+      targetPort: 8000 # port on Service
+      port: 8000 # port on Pod

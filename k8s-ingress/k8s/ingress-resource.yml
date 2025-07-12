@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress-resource
+  namespace: k8s-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost # Docker Desktop (Kubernetes)
+      http:
+        paths:
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: users-service
+                port:
+                  number: 8000
+          - path: /products
+            pathType: Prefix
+            backend:
+              service:
+                name: products-service
+                port:
+                  number: 8001

@@ -28,3 +28,7 @@ make apply
 # To remove all k8s objects created
 make clean
 ```
+
+# References
+
+- [Kubernetes Ingress Tutorial For Beginners](https://devopscube.com/kubernetes-ingress-tutorial/)
